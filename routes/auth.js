@@ -16,4 +16,6 @@ router.post(
   authController.userLogout
 );
 router.post("/loginSSO", authController.ssoLogin);
+// router.post("/doLogin", authController.doLogin);
+
 module.exports = router;

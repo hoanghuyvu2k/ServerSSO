@@ -24,9 +24,12 @@ const authController = {
         req.body.password,
         user.password
       );
+
       if (!validPassword) {
         res.status(404).json("Wrong password!");
       }
+      const { serviceURL } = req.query;
+      console.log("da dung tk mk");
       if (user && validPassword) {
         const accessToken = authController.generateAccessToken(user);
         const refreshToken = authController.generateRefreshToken(user);
@@ -38,22 +41,26 @@ const authController = {
           secure: false,
         });
         const { password, ...others } = user._doc;
-        const { serviceURL } = req.query;
-        const url = new URL(serviceURL);
-        return res.redirect(`${serviceURL}?ssoToken=${accessToken}`);
-        // res.status(200).json({ ...others, accessToken });
+        let originService = "";
+        Object.keys(alloweOrigin).forEach((url) => {
+          if (serviceURL.includes(url)) {
+            originService = url;
+          }
+        });
+
+        let ress = await axios.post(`${originService}/simplesso/receiveToken`, {
+          ...others,
+          accessToken,
+        });
       }
+
+      return res.redirect(`${serviceURL}`);
     } catch (err) {
       res.status(500).json(err);
     }
   },
   ssoLogin: async (req, res) => {
-    // The req.query will have the redirect url where we need to redirect after successful
-    // login and with sso token.
-    // This can also be used to verify the origin from where the request has came in
-    // for the redirection
     const { serviceURL } = req.query;
-    // direct access will give the error inside new URL.
     if (serviceURL != null) {
       const url = new URL(serviceURL);
       if (alloweOrigin[url.origin] !== true) {
@@ -62,17 +69,6 @@ const authController = {
           .json({ message: "Your are not allowed to access the sso-server" });
       }
     }
-    // if (req.session.user != null && serviceURL == null) {
-    //   return res.redirect("/");
-    // }
-    // if global session already has the user directly redirect with the token
-    // if (req.session.user != null && serviceURL != null) {
-    //   const url = new URL(serviceURL);
-    //   const intrmid = encodedId();
-    //   storeApplicationInCache(url.origin, req.session.user, intrmid);
-    //   return res.redirect(`${serviceURL}?ssoToken=${intrmid}`);
-    // }
-
     return res.render("login", {
       title: "SSO-Server | Login",
     });

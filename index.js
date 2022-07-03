@@ -13,7 +13,7 @@ const engine = require("ejs-mate");
 mongoose.connect(process.env.MONGODB_URL, () => {
   console.log("Connecting to Database");
 });
-
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
